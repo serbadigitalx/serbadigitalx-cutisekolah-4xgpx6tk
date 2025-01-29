@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Calendar as CalendarIcon, Share2, X, MapPin } from 'lucide-react';
 import { Calendar } from './components/Calendar';
+import { UpcomingHoliday } from './components/UpcomingHoliday';
 
 type Holiday = {
   date: string;
@@ -176,6 +177,28 @@ function App() {
   const [view, setView] = useState<'national' | 'state' | 'calendar'>('national');
   const [selectedDate, setSelectedDate] = useState(new Date());
 
+  const upcomingHoliday = useMemo(() => {
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentDay = today.getDate();
+    
+    const monthToNum: { [key: string]: number } = {
+      'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+      'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+    };
+
+    return publicHolidays.find(holiday => {
+      const [month, day] = holiday.date.split(' ');
+      const holidayMonth = monthToNum[month];
+      const holidayDay = parseInt(day);
+
+      return (
+        (holidayMonth > currentMonth) ||
+        (holidayMonth === currentMonth && holidayDay >= currentDay)
+      );
+    }) || null;
+  }, []);
+
   const handleShare = async () => {
     try {
       await navigator.share({
@@ -248,6 +271,8 @@ function App() {
       </header>
 
       <main className="max-w-3xl mx-auto px-3 py-6 sm:px-6 lg:px-8 space-y-8">
+        <UpcomingHoliday holiday={upcomingHoliday} />
+        
         {view === 'calendar' ? (
           <Calendar
             selectedDate={selectedDate}

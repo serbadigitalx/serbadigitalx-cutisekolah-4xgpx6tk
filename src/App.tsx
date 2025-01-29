@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Calendar, Share2, X, MapPin } from 'lucide-react';
+import { Calendar as CalendarIcon, Share2, X, MapPin } from 'lucide-react';
+import { Calendar } from './components/Calendar';
 
 type Holiday = {
   date: string;
@@ -173,6 +174,7 @@ function App() {
   const [activeGroup, setActiveGroup] = useState<'A' | 'B'>('A');
   const [selectedEvent, setSelectedEvent] = useState<Holiday | (SchoolHoliday & { type: 'school' }) | null>(null);
   const [view, setView] = useState<'national' | 'state' | 'calendar'>('national');
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   const handleShare = async () => {
     try {
@@ -186,7 +188,7 @@ function App() {
     }
   };
 
-  const currentMonth = new Date().getMonth();
+  const currentMonth = selectedDate.getMonth();
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const currentMonthHolidays = publicHolidays.filter(holiday => 
     holiday.date.startsWith(monthNames[currentMonth])
@@ -207,10 +209,9 @@ function App() {
               </h1>
               <p className="text-sm text-blue-100 mt-0.5">Plan Your Cuti with Ease</p>
             </div>
-            <Calendar className="h-8 w-8 text-blue-100" />
+            <CalendarIcon className="h-8 w-8 text-blue-100" />
           </div>
           
-          {/* Navigation Tabs - Updated with new design */}
           <div className="flex mt-4 space-x-1 bg-white/10 p-1 rounded-xl">
             <button
               onClick={() => setView('national')}
@@ -247,104 +248,30 @@ function App() {
       </header>
 
       <main className="max-w-3xl mx-auto px-3 py-6 sm:px-6 lg:px-8 space-y-8">
-        {/* View Title */}
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">
-            {view === 'calendar' 
-              ? `Holidays in ${new Date().toLocaleString('default', { month: 'long' })}`
-              : `${view === 'national' ? 'National' : 'State'} Holidays`}
-          </h2>
-        </div>
-
-        {/* Holidays List */}
-        <div className="grid gap-2 sm:gap-4 sm:grid-cols-2">
-          {filteredHolidays.map((holiday, index) => {
-            const days = calculateDays(holiday.date);
-            return (
-              <button
-                key={index}
-                onClick={() => setSelectedEvent(holiday)}
-                className={`text-left p-3 rounded-lg transition-all ${
-                  holiday.isPast 
-                    ? 'bg-gray-50 opacity-50' 
-                    : 'bg-white shadow-sm hover:shadow-md'
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="flex-1 min-w-0">
-                    <h3 className={`text-sm font-medium truncate ${holiday.isPast ? 'line-through' : ''}`}>
-                      {holiday.name}
-                    </h3>
-                    <p className="text-xs text-gray-500 mt-0.5">{holiday.date}</p>
-                    <div className="flex items-center mt-1.5 text-xs text-gray-500">
-                      <MapPin className="h-3 w-3 mr-1 shrink-0" />
-                      <span className="truncate">{holiday.states}</span>
-                    </div>
-                  </div>
-                  <span className={`shrink-0 px-1.5 py-0.5 rounded-full text-xs font-medium ${
-                    holiday.isPast 
-                      ? 'bg-gray-100 text-gray-600' 
-                      : holiday.type === 'national'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-purple-100 text-purple-800'
-                  }`}>
-                    {days}d
-                  </span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Show School Holidays only when not in calendar view */}
-        {view !== 'calendar' && (
-          <section className="pt-4 border-t">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">School Holidays</h2>
-              <div className="inline-flex p-0.5 space-x-1 bg-gray-100 rounded-lg text-sm">
-                <button
-                  onClick={() => setActiveGroup('A')}
-                  className={`px-3 py-1 rounded-md font-medium transition-colors ${
-                    activeGroup === 'A'
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-600'
-                  }`}
-                >
-                  A
-                </button>
-                <button
-                  onClick={() => setActiveGroup('B')}
-                  className={`px-3 py-1 rounded-md font-medium transition-colors ${
-                    activeGroup === 'B'
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-600'
-                  }`}
-                >
-                  B
-                </button>
-              </div>
+        {view === 'calendar' ? (
+          <Calendar
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
+            holidays={publicHolidays}
+            onHolidayClick={setSelectedEvent}
+          />
+        ) : (
+          <>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">
+                {view === 'calendar' 
+                  ? `Holidays in ${new Date().toLocaleString('default', { month: 'long' })}`
+                  : `${view === 'national' ? 'National' : 'State'} Holidays`}
+              </h2>
             </div>
 
-            {/* States List */}
-            <div className="mb-4 px-3 py-2 bg-gray-50 rounded text-xs text-gray-600">
-              {activeGroup === 'A' ? (
-                <span>Johor, Kedah, Kelantan, Terengganu</span>
-              ) : (
-                <span>
-                  Perlis, Penang, Perak, Selangor, N. Sembilan, Melaka, Pahang,
-                  Sabah, Sarawak, KL, Putrajaya, Labuan
-                </span>
-              )}
-            </div>
-
-            {/* School Holiday List */}
             <div className="grid gap-2 sm:gap-4 sm:grid-cols-2">
-              {(activeGroup === 'A' ? groupAHolidays : groupBHolidays).map((holiday, index) => {
-                const days = calculateDays(holiday.startDate, holiday.endDate);
+              {filteredHolidays.map((holiday, index) => {
+                const days = calculateDays(holiday.date);
                 return (
                   <button
                     key={index}
-                    onClick={() => setSelectedEvent({ ...holiday, type: 'school' })}
+                    onClick={() => setSelectedEvent(holiday)}
                     className={`text-left p-3 rounded-lg transition-all ${
                       holiday.isPast 
                         ? 'bg-gray-50 opacity-50' 
@@ -356,14 +283,18 @@ function App() {
                         <h3 className={`text-sm font-medium truncate ${holiday.isPast ? 'line-through' : ''}`}>
                           {holiday.name}
                         </h3>
-                        <p className="text-xs text-gray-500 mt-0.5">
-                          {holiday.startDate} – {holiday.endDate}
-                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">{holiday.date}</p>
+                        <div className="flex items-center mt-1.5 text-xs text-gray-500">
+                          <MapPin className="h-3 w-3 mr-1 shrink-0" />
+                          <span className="truncate">{holiday.states}</span>
+                        </div>
                       </div>
                       <span className={`shrink-0 px-1.5 py-0.5 rounded-full text-xs font-medium ${
                         holiday.isPast 
                           ? 'bg-gray-100 text-gray-600' 
-                          : 'bg-emerald-100 text-emerald-800'
+                          : holiday.type === 'national'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-purple-100 text-purple-800'
                       }`}>
                         {days}d
                       </span>
@@ -372,10 +303,83 @@ function App() {
                 );
               })}
             </div>
-          </section>
+
+            <section className="pt-4 border-t">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-900">School Holidays</h2>
+                <div className="inline-flex p-0.5 space-x-1 bg-gray-100 rounded-lg text-sm">
+                  <button
+                    onClick={() => setActiveGroup('A')}
+                    className={`px-3 py-1 rounded-md font-medium transition-colors ${
+                      activeGroup === 'A'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-600'
+                    }`}
+                  >
+                    A
+                  </button>
+                  <button
+                    onClick={() => setActiveGroup('B')}
+                    className={`px-3 py-1 rounded-md font-medium transition-colors ${
+                      activeGroup === 'B'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-600'
+                    }`}
+                  >
+                    B
+                  </button>
+                </div>
+              </div>
+
+              <div className="mb-4 px-3 py-2 bg-gray-50 rounded text-xs text-gray-600">
+                {activeGroup === 'A' ? (
+                  <span>Johor, Kedah, Kelantan, Terengganu</span>
+                ) : (
+                  <span>
+                    Perlis, Penang, Perak, Selangor, N. Sembilan, Melaka, Pahang,
+                    Sabah, Sarawak, KL, Putrajaya, Labuan
+                  </span>
+                )}
+              </div>
+
+              <div className="grid gap-2 sm:gap-4 sm:grid-cols-2">
+                {(activeGroup === 'A' ? groupAHolidays : groupBHolidays).map((holiday, index) => {
+                  const days = calculateDays(holiday.startDate, holiday.endDate);
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedEvent({ ...holiday, type: 'school' })}
+                      className={`text-left p-3 rounded-lg transition-all ${
+                        holiday.isPast 
+                          ? 'bg-gray-50 opacity-50' 
+                          : 'bg-white shadow-sm hover:shadow-md'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <h3 className={`text-sm font-medium truncate ${holiday.isPast ? 'line-through' : ''}`}>
+                            {holiday.name}
+                          </h3>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {holiday.startDate} – {holiday.endDate}
+                          </p>
+                        </div>
+                        <span className={`shrink-0 px-1.5 py-0.5 rounded-full text-xs font-medium ${
+                          holiday.isPast 
+                            ? 'bg-gray-100 text-gray-600' 
+                            : 'bg-emerald-100 text-emerald-800'
+                        }`}>
+                          {days}d
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          </>
         )}
 
-        {/* Share Button */}
         <div className="fixed bottom-6 right-6">
           <button
             onClick={handleShare}
@@ -386,7 +390,6 @@ function App() {
         </div>
       </main>
 
-      {/* Event Modal */}
       <EventModal
         isOpen={!!selectedEvent}
         onClose={() => setSelectedEvent(null)}

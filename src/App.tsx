@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Calendar as CalendarIcon, Share2, X, MapPin } from 'lucide-react';
+import { Calendar as CalendarIcon, Share2, X, MapPin, Search } from 'lucide-react';
 import { Calendar } from './components/Calendar';
 import { UpcomingHoliday } from './components/UpcomingHoliday';
 
@@ -176,6 +176,8 @@ function App() {
   const [selectedEvent, setSelectedEvent] = useState<Holiday | (SchoolHoliday & { type: 'school' }) | null>(null);
   const [view, setView] = useState<'national' | 'state' | 'calendar'>('national');
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const upcomingHoliday = useMemo(() => {
     const today = new Date();
@@ -198,6 +200,38 @@ function App() {
       );
     }) || null;
   }, []);
+
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+
+    const query = searchQuery.toLowerCase();
+    const results: Array<Holiday | (SchoolHoliday & { type: 'school' })> = [];
+
+    // Search through public holidays
+    publicHolidays.forEach(holiday => {
+      if (
+        holiday.name.toLowerCase().includes(query) ||
+        holiday.date.toLowerCase().includes(query) ||
+        holiday.states.toLowerCase().includes(query)
+      ) {
+        results.push(holiday);
+      }
+    });
+
+    // Search through school holidays
+    const schoolHolidays = [...groupAHolidays, ...groupBHolidays];
+    schoolHolidays.forEach(holiday => {
+      if (
+        holiday.name.toLowerCase().includes(query) ||
+        holiday.startDate.toLowerCase().includes(query) ||
+        holiday.endDate.toLowerCase().includes(query)
+      ) {
+        results.push({ ...holiday, type: 'school' });
+      }
+    });
+
+    return results.slice(0, 5); // Limit to 5 results
+  }, [searchQuery]);
 
   const handleShare = async () => {
     try {
@@ -233,6 +267,52 @@ function App() {
               <p className="text-sm text-blue-100 mt-0.5">Plan Your Cuti with Ease</p>
             </div>
             <CalendarIcon className="h-8 w-8 text-blue-100" />
+          </div>
+
+          <div className="relative mt-4">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search holidays, dates, or states..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                className="w-full px-4 py-2 pl-10 bg-white/10 border border-white/20 rounded-lg placeholder-blue-100 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+              />
+              <Search className="absolute left-3 top-2.5 h-5 w-5 text-blue-100" />
+            </div>
+
+            {isSearchFocused && searchResults.length > 0 && (
+              <div className="absolute mt-2 w-full bg-white rounded-lg shadow-lg overflow-hidden z-50">
+                {searchResults.map((result, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setSelectedEvent(result);
+                      setSearchQuery('');
+                    }}
+                    className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center justify-between group"
+                  >
+                    <div>
+                      <p className="text-gray-900 font-medium">{result.name}</p>
+                      <p className="text-sm text-gray-500">
+                        {'date' in result ? result.date : `${result.startDate} - ${result.endDate}`}
+                      </p>
+                    </div>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      result.type === 'national'
+                        ? 'bg-red-100 text-red-800'
+                        : result.type === 'state'
+                          ? 'bg-purple-100 text-purple-800'
+                          : 'bg-emerald-100 text-emerald-800'
+                    }`}>
+                      {result.type === 'school' ? 'School' : result.type}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           
           <div className="flex mt-4 space-x-1 bg-white/10 p-1 rounded-xl">

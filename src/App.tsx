@@ -370,37 +370,44 @@ function App() {
               </h2>
             </div>
 
-            <div className="grid gap-2 sm:gap-4 sm:grid-cols-2">
+            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
               {filteredHolidays.map((holiday, index) => {
                 const days = calculateDays(holiday.date);
                 return (
                   <button
                     key={index}
                     onClick={() => setSelectedEvent(holiday)}
-                    className={`text-left p-3 rounded-lg transition-all ${
-                      holiday.isPast 
-                        ? 'bg-gray-50 opacity-50' 
-                        : 'bg-white shadow-sm hover:shadow-md'
-                    }`}
+                    className={`
+                      text-left p-4 rounded-lg transition-all duration-200
+                      shadow-sm hover:shadow-md hover:scale-[1.02] transform
+                      ${holiday.isPast 
+                        ? 'opacity-50 bg-gray-50' 
+                        : holiday.type === 'national'
+                          ? 'bg-[#E3F2FD] hover:bg-[#BBDEFB]'
+                          : 'bg-[#E8F5E9] hover:bg-[#C8E6C9]'
+                      }
+                    `}
                   >
                     <div className="flex items-start gap-3">
                       <div className="flex-1 min-w-0">
                         <h3 className={`text-sm font-medium truncate ${holiday.isPast ? 'line-through' : ''}`}>
                           {holiday.name}
                         </h3>
-                        <p className="text-xs text-gray-500 mt-0.5">{holiday.date}</p>
-                        <div className="flex items-center mt-1.5 text-xs text-gray-500">
+                        <p className="text-xs text-gray-600 mt-1">{holiday.date}</p>
+                        <div className="flex items-center mt-2 text-xs text-gray-600">
                           <MapPin className="h-3 w-3 mr-1 shrink-0" />
                           <span className="truncate">{holiday.states}</span>
                         </div>
                       </div>
-                      <span className={`shrink-0 px-1.5 py-0.5 rounded-full text-xs font-medium ${
-                        holiday.isPast 
+                      <span className={`
+                        shrink-0 px-2 py-1 rounded-full text-xs font-medium
+                        ${holiday.isPast 
                           ? 'bg-gray-100 text-gray-600' 
                           : holiday.type === 'national'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-purple-100 text-purple-800'
-                      }`}>
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-green-100 text-green-800'
+                        }
+                      `}>
                         {days}d
                       </span>
                     </div>
@@ -409,7 +416,7 @@ function App() {
               })}
             </div>
 
-            <section className="pt-4 border-t">
+            <section className="pt-6 border-t">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900">School Holidays</h2>
                 <div className="inline-flex p-0.5 space-x-1 bg-gray-100 rounded-lg text-sm">
@@ -447,33 +454,38 @@ function App() {
                 )}
               </div>
 
-              <div className="grid gap-2 sm:gap-4 sm:grid-cols-2">
+              <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
                 {(activeGroup === 'A' ? groupAHolidays : groupBHolidays).map((holiday, index) => {
                   const days = calculateDays(holiday.startDate, holiday.endDate);
                   return (
                     <button
                       key={index}
                       onClick={() => setSelectedEvent({ ...holiday, type: 'school' })}
-                      className={`text-left p-3 rounded-lg transition-all ${
-                        holiday.isPast 
-                          ? 'bg-gray-50 opacity-50' 
-                          : 'bg-white shadow-sm hover:shadow-md'
-                      }`}
+                      className={`
+                        text-left p-4 rounded-lg transition-all duration-200
+                        shadow-sm hover:shadow-md hover:scale-[1.02] transform
+                        ${holiday.isPast 
+                          ? 'opacity-50 bg-gray-50' 
+                          : 'bg-[#FFF9C4] hover:bg-[#FFF59D]'
+                        }
+                      `}
                     >
                       <div className="flex items-start gap-3">
                         <div className="flex-1 min-w-0">
                           <h3 className={`text-sm font-medium truncate ${holiday.isPast ? 'line-through' : ''}`}>
                             {holiday.name}
                           </h3>
-                          <p className="text-xs text-gray-500 mt-0.5">
+                          <p className="text-xs text-gray-600 mt-1">
                             {holiday.startDate} – {holiday.endDate}
                           </p>
                         </div>
-                        <span className={`shrink-0 px-1.5 py-0.5 rounded-full text-xs font-medium ${
-                          holiday.isPast 
+                        <span className={`
+                          shrink-0 px-2 py-1 rounded-full text-xs font-medium
+                          ${holiday.isPast 
                             ? 'bg-gray-100 text-gray-600' 
-                            : 'bg-emerald-100 text-emerald-800'
-                        }`}>
+                            : 'bg-yellow-100 text-yellow-800'
+                          }
+                        `}>
                           {days}d
                         </span>
                       </div>

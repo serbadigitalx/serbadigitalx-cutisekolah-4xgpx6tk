@@ -1,7 +1,10 @@
 import React, { useState, useMemo } from 'react';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { Calendar as CalendarIcon, Share2, X, MapPin, Search, ChevronRight } from 'lucide-react';
 import { Calendar } from './components/Calendar';
 import { UpcomingHoliday } from './components/UpcomingHoliday';
+import { EventModal } from './components/EventModal';
+import { EventPage } from './pages/EventPage';
 
 type Holiday = {
   date: string;
@@ -37,62 +40,6 @@ const formatDateRange = (date: string) => {
   const dates = date.split('–');
   if (dates.length === 1) return date;
   return `${dates[0].trim()} to ${dates[1].trim()}`;
-};
-
-const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, event }) => {
-  if (!isOpen || !event) return null;
-
-  const isSchoolHoliday = 'type' in event && event.type === 'school';
-  const days = isSchoolHoliday 
-    ? calculateDays(event.startDate, event.endDate)
-    : calculateDays(event.date);
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-        >
-          <X className="h-5 w-5" />
-        </button>
-        
-        <h3 className="text-xl font-semibold text-gray-900 mb-4">
-          {event.name}
-        </h3>
-        
-        <div className="space-y-3">
-          <div>
-            <p className="text-sm font-medium text-gray-500">Date</p>
-            <p className="text-base text-gray-900">
-              {isSchoolHoliday 
-                ? `${event.startDate} to ${event.endDate}`
-                : formatDateRange(event.date)
-              }
-            </p>
-          </div>
-          
-          <div>
-            <p className="text-sm font-medium text-gray-500">Duration</p>
-            <p className="text-base text-gray-900">{days} day{days > 1 ? 's' : ''}</p>
-          </div>
-          
-          {!isSchoolHoliday && (
-            <>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Regions</p>
-                <p className="text-base text-gray-900">{event.states}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Holiday Type</p>
-                <p className="text-base text-gray-900 capitalize">{event.type} Holiday</p>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
 };
 
 const publicHolidays: Holiday[] = [
@@ -179,6 +126,9 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
+  const location = useLocation();
+  const isHomePage = location.pathname === '/';
+
   const upcomingHoliday = useMemo(() => {
     const today = new Date();
     const currentMonth = today.getMonth();
@@ -207,7 +157,6 @@ function App() {
     const query = searchQuery.toLowerCase();
     const results: Array<Holiday | (SchoolHoliday & { type: 'school' })> = [];
 
-    // Search through public holidays
     publicHolidays.forEach(holiday => {
       if (
         holiday.name.toLowerCase().includes(query) ||
@@ -218,7 +167,6 @@ function App() {
       }
     });
 
-    // Search through school holidays
     const schoolHolidays = [...groupAHolidays, ...groupBHolidays];
     schoolHolidays.forEach(holiday => {
       if (
@@ -230,7 +178,7 @@ function App() {
       }
     });
 
-    return results.slice(0, 5); // Limit to 5 results
+    return results.slice(0, 5);
   }, [searchQuery]);
 
   const handleShare = async () => {
@@ -251,7 +199,6 @@ function App() {
     holiday.date.startsWith(monthNames[currentMonth])
   );
 
-  // Mark past holidays
   const today = new Date();
   const currentYear = today.getFullYear();
   
@@ -282,7 +229,6 @@ function App() {
       return states;
     }
 
-    // For mobile screens, show first two states and a count
     return (
       <span className="sm:hidden">
         {`${statesList[0]}, ${statesList[1]} +${statesList.length - 2}`}
@@ -291,271 +237,276 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <header className="sticky top-0 z-10 bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
-        <div className="max-w-3xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                MY Holidays 2025
-              </h1>
-              <p className="text-sm text-blue-100 mt-0.5">Plan Your Cuti with Ease</p>
-            </div>
-            <CalendarIcon className="h-8 w-8 text-blue-100" />
-          </div>
-
-          <div className="relative mt-4">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search holidays, dates, or states..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setIsSearchFocused(true)}
-                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                className="w-full px-4 py-2 pl-10 bg-white/10 border border-white/20 rounded-lg placeholder-blue-100 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
-              />
-              <Search className="absolute left-3 top-2.5 h-5 w-5 text-blue-100" />
-            </div>
-
-            {isSearchFocused && searchResults.length > 0 && (
-              <div className="absolute mt-2 w-full bg-white rounded-lg shadow-lg overflow-hidden z-50">
-                {searchResults.map((result, index) => (
-                  <button
-                    key={index}
-                    onClick={() => {
-                      setSelectedEvent(result);
-                      setSearchQuery('');
-                    }}
-                    className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center justify-between group"
-                  >
-                    <div>
-                      <p className="text-gray-900 font-medium">{result.name}</p>
-                      <p className="text-sm text-gray-500">
-                        {'date' in result ? result.date : `${result.startDate} - ${result.endDate}`}
-                      </p>
-                    </div>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      result.type === 'national'
-                        ? 'bg-red-100 text-red-800'
-                        : result.type === 'state'
-                          ? 'bg-purple-100 text-purple-800'
-                          : 'bg-emerald-100 text-emerald-800'
-                    }`}>
-                      {result.type === 'school' ? 'School' : result.type}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          
-          <div className="flex mt-4 space-x-1 bg-white/10 p-1 rounded-xl">
-            <button
-              onClick={() => setView('national')}
-              className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all ${
-                view === 'national'
-                  ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg'
-                  : 'text-white hover:bg-white/20'
-              }`}
-            >
-              National
-            </button>
-            <button
-              onClick={() => setView('state')}
-              className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all ${
-                view === 'state'
-                  ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-lg'
-                  : 'text-white hover:bg-white/20'
-              }`}
-            >
-              State
-            </button>
-            <button
-              onClick={() => setView('calendar')}
-              className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all ${
-                view === 'calendar'
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg'
-                  : 'text-white hover:bg-white/20'
-              }`}
-            >
-              Calendar
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-3xl mx-auto px-3 py-6 sm:px-6 lg:px-8 space-y-8">
-        <UpcomingHoliday holiday={upcomingHoliday} />
-        
-        {view === 'calendar' ? (
-          <Calendar
-            selectedDate={selectedDate}
-            onDateChange={setSelectedDate}
-            holidays={publicHolidays}
-            onHolidayClick={setSelectedEvent}
-          />
-        ) : (
-          <>
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">
-                {view === 'calendar' 
-                  ? `Holidays in ${new Date().toLocaleString('default', { month: 'long' })}`
-                  : `${view === 'national' ? 'National' : 'State'} Holidays`}
-              </h2>
-            </div>
-
-            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
-              {filteredHolidays.map((holiday, index) => {
-                const days = calculateDays(holiday.date);
-                return (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedEvent(holiday)}
-                    className={`
-                      text-left p-4 rounded-lg transition-all duration-200
-                      shadow-sm hover:shadow-md hover:scale-[1.02] transform
-                      ${holiday.isPast 
-                        ? 'opacity-50 bg-gray-50' 
-                        : holiday.type === 'national'
-                          ? 'bg-[#E3F2FD] hover:bg-[#BBDEFB]'
-                          : 'bg-[#E8F5E9] hover:bg-[#C8E6C9]'
-                      }
-                    `}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="flex-1 min-w-0">
-                        <h3 className={`text-sm font-medium truncate ${holiday.isPast ? 'line-through' : ''}`}>
-                          {holiday.name}
-                        </h3>
-                        <p className="text-xs text-gray-600 mt-1">{holiday.date}</p>
-                        <div className="flex items-center mt-2 text-xs text-gray-600">
-                          <MapPin className="h-3 w-3 mr-1 shrink-0" />
-                          <div className="flex items-center">
-                            <span className="hidden sm:block truncate">{holiday.states}</span>
-                            <span className="block sm:hidden truncate">
-                              {renderStatesList(holiday.states)}
-                            </span>
-                            {holiday.type === 'state' && (
-                              <ChevronRight className="h-3 w-3 ml-0.5 text-gray-400" />
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <span className={`
-                        shrink-0 px-2 py-1 rounded-full text-xs font-medium
-                        ${holiday.isPast 
-                          ? 'bg-gray-100 text-gray-600' 
-                          : holiday.type === 'national'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-green-100 text-green-800'
-                        }
-                      `}>
-                        {days}d
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            <section className="pt-6 border-t">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">School Holidays</h2>
-                <div className="inline-flex p-0.5 space-x-1 bg-gray-100 rounded-lg text-sm">
-                  <button
-                    onClick={() => setActiveGroup('A')}
-                    className={`px-3 py-1 rounded-md font-medium transition-colors ${
-                      activeGroup === 'A'
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-600'
-                    }`}
-                  >
-                    A
-                  </button>
-                  <button
-                    onClick={() => setActiveGroup('B')}
-                    className={`px-3 py-1 rounded-md font-medium transition-colors ${
-                      activeGroup === 'B'
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-600'
-                    }`}
-                  >
-                    B
-                  </button>
+    <Routes>
+      <Route path="/event/:type/:id" element={<EventPage holidays={publicHolidays} schoolHolidays={activeGroup === 'A' ? groupAHolidays : groupBHolidays} />} />
+      <Route path="/" element={
+        <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+          <header className="sticky top-0 z-10 bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
+            <div className="max-w-3xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                    MY Holidays 2025
+                  </h1>
+                  <p className="text-sm text-blue-100 mt-0.5">Plan Your Cuti with Ease</p>
                 </div>
+                <CalendarIcon className="h-8 w-8 text-blue-100" />
               </div>
 
-              <div className="mb-4 px-3 py-2 bg-gray-50 rounded text-xs text-gray-600">
-                {activeGroup === 'A' ? (
-                  <span>Johor, Kedah, Kelantan, Terengganu</span>
-                ) : (
-                  <span>
-                    Perlis, Penang, Perak, Selangor, N. Sembilan, Melaka, Pahang,
-                    Sabah, Sarawak, KL, Putrajaya, Labuan
-                  </span>
-                )}
-              </div>
+              <div className="relative mt-4">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search holidays, dates, or states..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => setIsSearchFocused(true)}
+                    onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                    className="w-full px-4 py-2 pl-10 bg-white/10 border border-white/20 rounded-lg placeholder-blue-100 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+                  />
+                  <Search className="absolute left-3 top-2.5 h-5 w-5 text-blue-100" />
+                </div>
 
-              <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
-                {processedSchoolHolidays.map((holiday, index) => {
-                  const days = calculateDays(holiday.startDate, holiday.endDate);
-                  return (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedEvent({ ...holiday, type: 'school' })}
-                      className={`
-                        text-left p-4 rounded-lg transition-all duration-200
-                        shadow-sm hover:shadow-md hover:scale-[1.02] transform
-                        ${holiday.isPast 
-                          ? 'opacity-50 bg-gray-50' 
-                          : 'bg-[#FFF9C4] hover:bg-[#FFF59D]'
-                        }
-                      `}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="flex-1 min-w-0">
-                          <h3 className={`text-sm font-medium truncate ${holiday.isPast ? 'line-through' : ''}`}>
-                            {holiday.name}
-                          </h3>
-                          <p className="text-xs text-gray-600 mt-1">
-                            {holiday.startDate} – {holiday.endDate}
+                {isSearchFocused && searchResults.length > 0 && (
+                  <div className="absolute mt-2 w-full bg-white rounded-lg shadow-lg overflow-hidden z-50">
+                    {searchResults.map((result, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          setSelectedEvent(result);
+                          setSearchQuery('');
+                        }}
+                        className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center justify-between group"
+                      >
+                        <div>
+                          <p className="text-gray-900 font-medium">{result.name}</p>
+                          <p className="text-sm text-gray-500">
+                            {'date' in result ? result.date : `${result.startDate} - ${result.endDate}`}
                           </p>
                         </div>
-                        <span className={`
-                          shrink-0 px-2 py-1 rounded-full text-xs font-medium
-                          ${holiday.isPast 
-                            ? 'bg-gray-100 text-gray-600' 
-                            : 'bg-yellow-100 text-yellow-800'
-                          }
-                        `}>
-                          {days}d
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          result.type === 'national'
+                            ? 'bg-red-100 text-red-800'
+                            : result.type === 'state'
+                              ? 'bg-purple-100 text-purple-800'
+                              : 'bg-emerald-100 text-emerald-800'
+                        }`}>
+                          {result.type === 'school' ? 'School' : result.type}
                         </span>
-                      </div>
-                    </button>
-                  );
-                })}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-            </section>
-          </>
-        )}
+              
+              <div className="flex mt-4 space-x-1 bg-white/10 p-1 rounded-xl">
+                <button
+                  onClick={() => setView('national')}
+                  className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all ${
+                    view === 'national'
+                      ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg'
+                      : 'text-white hover:bg-white/20'
+                  }`}
+                >
+                  National
+                </button>
+                <button
+                  onClick={() => setView('state')}
+                  className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all ${
+                    view === 'state'
+                      ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-lg'
+                      : 'text-white hover:bg-white/20'
+                  }`}
+                >
+                  State
+                </button>
+                <button
+                  onClick={() => setView('calendar')}
+                  className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all ${
+                    view === 'calendar'
+                      ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg'
+                      : 'text-white hover:bg-white/20'
+                  }`}
+                >
+                  Calendar
+                </button>
+              </div>
+            </div>
+          </header>
 
-        <div className="fixed bottom-6 right-6">
-          <button
-            onClick={handleShare}
-            className="flex items-center justify-center w-12 h-12 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <Share2 className="h-5 w-5" />
-          </button>
+          <main className="max-w-3xl mx-auto px-3 py-6 sm:px-6 lg:px-8 space-y-8">
+            <UpcomingHoliday holiday={upcomingHoliday} />
+            
+            {view === 'calendar' ? (
+              <Calendar
+                selectedDate={selectedDate}
+                onDateChange={setSelectedDate}
+                holidays={publicHolidays}
+                onHolidayClick={setSelectedEvent}
+              />
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    {view === 'calendar' 
+                      ? `Holidays in ${new Date().toLocaleString('default', { month: 'long' })}`
+                      : `${view === 'national' ? 'National' : 'State'} Holidays`}
+                  </h2>
+                </div>
+
+                <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
+                  {filteredHolidays.map((holiday, index) => {
+                    const days = calculateDays(holiday.date);
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => setSelectedEvent(holiday)}
+                        className={`
+                          text-left p-4 rounded-lg transition-all duration-200
+                          shadow-sm hover:shadow-md hover:scale-[1.02] transform
+                          ${holiday.isPast 
+                            ? 'opacity-50 bg-gray-50' 
+                            : holiday.type === 'national'
+                              ? 'bg-[#E3F2FD] hover:bg-[#BBDEFB]'
+                              : 'bg-[#E8F5E9] hover:bg-[#C8E6C9]'
+                          }
+                        `}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex-1 min-w-0">
+                            <h3 className={`text-sm font-medium truncate ${holiday.isPast ? 'line-through' : ''}`}>
+                              {holiday.name}
+                            </h3>
+                            <p className="text-xs text-gray-600 mt-1">{holiday.date}</p>
+                            <div className="flex items-center mt-2 text-xs text-gray-600">
+                              <MapPin className="h-3 w-3 mr-1 shrink-0" />
+                              <div className="flex items-center">
+                                <span className="hidden sm:block truncate">{holiday.states}</span>
+                                <span className="block sm:hidden truncate">
+                                  {renderStatesList(holiday.states)}
+                                </span>
+                                {holiday.type === 'state' && (
+                                  <ChevronRight className="h-3 w-3 ml-0.5 text-gray-400" />
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <span className={`
+                            shrink-0 px-2 py-1 rounded-full text-xs font-medium
+                            ${holiday.isPast 
+                              ? 'bg-gray-100 text-gray-600' 
+                              : holiday.type === 'national'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-green-100 text-green-800'
+                            }
+                          `}>
+                            {days}d
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <section className="pt-6 border-t">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold text-gray-900">School Holidays</h2>
+                    <div className="inline-flex p-0.5 space-x-1 bg-gray-100 rounded-lg text-sm">
+                      <button
+                        onClick={() => setActiveGroup('A')}
+                        className={`px-3 py-1 rounded-md font-medium transition-colors ${
+                          activeGroup === 'A'
+                            ? 'bg-white text-gray-900 shadow-sm'
+                            : 'text-gray-600'
+                        }`}
+                      >
+                        A
+                      </button>
+                      <button
+                        onClick={() => setActiveGroup('B')}
+                        className={`px-3 py-1 rounded-md font-medium transition-colors ${
+                          activeGroup === 'B'
+                            ? 'bg-white text-gray-900 shadow-sm'
+                            : 'text-gray-600'
+                        }`}
+                      >
+                        B
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mb-4 px-3 py-2 bg-gray-50 rounded text-xs text-gray-600">
+                    {activeGroup === 'A' ? (
+                      <span>Johor, Kedah, Kelantan, Terengganu</span>
+                    ) : (
+                      <span>
+                        Perlis, Penang, Perak, Selangor, N. Sembilan, Melaka, Pahang,
+                        Sabah, Sarawak, KL, Putrajaya, Labuan
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
+                    {processedSchoolHolidays.map((holiday, index) => {
+                      const days = calculateDays(holiday.startDate, holiday.endDate);
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => setSelectedEvent({ ...holiday, type: 'school' })}
+                          className={`
+                            text-left p-4 rounded-lg transition-all duration-200
+                            shadow-sm hover:shadow-md hover:scale-[1.02] transform
+                            ${holiday.isPast 
+                              ? 'opacity-50 bg-gray-50' 
+                              : 'bg-[#FFF9C4] hover:bg-[#FFF59D]'
+                            }
+                          `}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="flex-1 min-w-0">
+                              <h3 className={`text-sm font-medium truncate ${holiday.isPast ? 'line-through' : ''}`}>
+                                {holiday.name}
+                              </h3>
+                              <p className="text-xs text-gray-600 mt-1">
+                                {holiday.startDate} – {holiday.endDate}
+                              </p>
+                            </div>
+                            <span className={`
+                              shrink-0 px-2 py-1 rounded-full text-xs font-medium
+                              ${holiday.isPast 
+                                ? 'bg-gray-100 text-gray-600' 
+                                : 'bg-yellow-100 text-yellow-800'
+                              }
+                            `}>
+                              {days}d
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+              </>
+            )}
+
+            <div className="fixed bottom-6 right-6">
+              <button
+                onClick={handleShare}
+                className="flex items-center justify-center w-12 h-12 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <Share2 className="h-5 w-5" />
+              </button>
+            </div>
+          </main>
+
+          <EventModal
+            isOpen={!!selectedEvent}
+            onClose={() => setSelectedEvent(null)}
+            event={selectedEvent}
+          />
         </div>
-      </main>
-
-      <EventModal
-        isOpen={!!selectedEvent}
-        onClose={() => setSelectedEvent(null)}
-        event={selectedEvent}
-      />
-    </div>
+      } />
+    </Routes>
   );
 }
 

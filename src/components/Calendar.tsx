@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, Info } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface CalendarProps {
   selectedDate: Date;
@@ -104,14 +104,14 @@ export function Calendar({ selectedDate, onDateChange, holidays, onHolidayClick 
               key={day}
               className={`
                 aspect-square p-1 relative rounded-lg transition-all duration-200
-                ${todayCell ? 'bg-gradient-to-br from-amber-100 to-amber-200 shadow-sm' : ''}
+                ${todayCell ? 'bg-gradient-to-br from-red-50 to-red-100 shadow-sm ring-2 ring-red-500 ring-offset-2' : ''}
                 ${hasHoliday ? 'hover:transform hover:scale-105' : ''}
                 ${hasHoliday && !todayCell ? 'bg-gradient-to-br from-blue-50 to-indigo-50' : ''}
               `}
             >
               <div className={`
                 text-sm font-medium
-                ${todayCell ? 'text-amber-900' : 'text-gray-700'}
+                ${todayCell ? 'text-red-700' : 'text-gray-700'}
               `}>
                 {day}
               </div>
@@ -138,7 +138,7 @@ export function Calendar({ selectedDate, onDateChange, holidays, onHolidayClick 
                   </div>
 
                   <div className="group relative">
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
                       <div className="bg-gray-900 text-white text-xs rounded-lg py-2 px-3 shadow-lg">
                         {dayHolidays.map((holiday, i) => (
                           <div key={i} className="mb-1 last:mb-0">

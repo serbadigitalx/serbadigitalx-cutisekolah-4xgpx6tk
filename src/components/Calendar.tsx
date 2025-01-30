@@ -146,12 +146,17 @@ export function Calendar({ selectedDate, onDateChange, holidays, onHolidayClick 
               <div
                 key={day}
                 className={`
-                  aspect-square p-1 relative rounded-lg transition-all duration-200 cursor-pointer
+                  aspect-square p-1 relative rounded-lg transition-all duration-200
                   ${todayCell ? 'bg-gradient-to-br from-red-50 to-red-100 shadow-sm ring-2 ring-red-500 ring-offset-2' : ''}
                   ${hasHoliday ? 'hover:transform hover:scale-105' : ''}
                   ${hasHoliday && !todayCell ? 'bg-gradient-to-br from-blue-50 to-indigo-50' : ''}
                 `}
-                onClick={() => handleDaySelect(day, dayHolidays)}
+                onClick={() => {
+                  handleDaySelect(day, dayHolidays);
+                  if (dayHolidays.length === 1) {
+                    onHolidayClick(dayHolidays[0]);
+                  }
+                }}
               >
                 <div className={`
                   text-sm font-medium
@@ -163,39 +168,24 @@ export function Calendar({ selectedDate, onDateChange, holidays, onHolidayClick 
                 {hasHoliday && (
                   <div className="absolute bottom-1 left-1 right-1 space-y-0.5">
                     {dayHolidays.map((holiday, i) => (
-                      <div
+                      <button
                         key={i}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onHolidayClick(holiday);
+                        }}
                         className={`
-                          text-[10px] px-1 py-0.5 rounded truncate
+                          w-full text-[10px] px-1 py-0.5 rounded truncate
+                          transition-all duration-200 hover:scale-105
                           ${holiday.type === 'national'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-purple-100 text-purple-800'
+                            ? 'bg-red-100 text-red-800 hover:bg-red-200'
+                            : 'bg-purple-100 text-purple-800 hover:bg-purple-200'
                           }
                         `}
                       >
                         {holiday.name.length > 12 ? `${holiday.name.slice(0, 12)}...` : holiday.name}
-                      </div>
+                      </button>
                     ))}
-                  </div>
-                )}
-
-                {hasHoliday && (
-                  <div className="group/tooltip">
-                    <div className="absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 
-                                  opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 
-                                  pointer-events-none min-w-[200px]">
-                      <div className="bg-gray-900 text-white text-xs rounded-lg py-2 px-3 shadow-lg">
-                        {dayHolidays.map((holiday, i) => (
-                          <div key={i} className="mb-2 last:mb-0">
-                            <div className="font-medium">{holiday.name}</div>
-                            <div className="text-gray-300 text-[10px] mt-0.5">{holiday.states}</div>
-                          </div>
-                        ))}
-                        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2">
-                          <div className="border-8 border-transparent border-t-gray-900" />
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 )}
               </div>
@@ -212,12 +202,13 @@ export function Calendar({ selectedDate, onDateChange, holidays, onHolidayClick 
           </h3>
           <div className="space-y-4">
             {selectedDayEvents.map((event, index) => (
-              <div
+              <button
                 key={index}
-                className={`p-4 rounded-lg ${
+                onClick={() => onHolidayClick(event)}
+                className={`w-full text-left p-4 rounded-lg transition-all duration-200 hover:scale-[1.02] ${
                   event.type === 'national'
-                    ? 'bg-red-50 border border-red-100'
-                    : 'bg-purple-50 border border-purple-100'
+                    ? 'bg-red-50 border border-red-100 hover:bg-red-100'
+                    : 'bg-purple-50 border border-purple-100 hover:bg-purple-100'
                 }`}
               >
                 <div className="flex items-start justify-between">
@@ -236,7 +227,7 @@ export function Calendar({ selectedDate, onDateChange, holidays, onHolidayClick 
                     {event.type === 'national' ? 'National' : 'State'}
                   </span>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>

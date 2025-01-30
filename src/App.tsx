@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Calendar as CalendarIcon, Share2, X, MapPin, Search } from 'lucide-react';
+import { Calendar as CalendarIcon, Share2, X, MapPin, Search, ChevronRight } from 'lucide-react';
 import { Calendar } from './components/Calendar';
 import { UpcomingHoliday } from './components/UpcomingHoliday';
 
@@ -275,6 +275,21 @@ function App() {
     ? currentMonthHolidays 
     : processedPublicHolidays.filter(holiday => holiday.type === view);
 
+  const renderStatesList = (states: string) => {
+    const statesList = states.split(', ');
+    
+    if (statesList.length <= 2) {
+      return states;
+    }
+
+    // For mobile screens, show first two states and a count
+    return (
+      <span className="sm:hidden">
+        {`${statesList[0]}, ${statesList[1]} +${statesList.length - 2}`}
+      </span>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <header className="sticky top-0 z-10 bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
@@ -416,7 +431,15 @@ function App() {
                         <p className="text-xs text-gray-600 mt-1">{holiday.date}</p>
                         <div className="flex items-center mt-2 text-xs text-gray-600">
                           <MapPin className="h-3 w-3 mr-1 shrink-0" />
-                          <span className="truncate">{holiday.states}</span>
+                          <div className="flex items-center">
+                            <span className="hidden sm:block truncate">{holiday.states}</span>
+                            <span className="block sm:hidden truncate">
+                              {renderStatesList(holiday.states)}
+                            </span>
+                            {holiday.type === 'state' && (
+                              <ChevronRight className="h-3 w-3 ml-0.5 text-gray-400" />
+                            )}
+                          </div>
                         </div>
                       </div>
                       <span className={`

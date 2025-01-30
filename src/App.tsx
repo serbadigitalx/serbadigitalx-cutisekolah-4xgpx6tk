@@ -251,9 +251,29 @@ function App() {
     holiday.date.startsWith(monthNames[currentMonth])
   );
 
+  // Mark past holidays
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  
+  const isPastHoliday = (dateStr: string) => {
+    const [month, day] = dateStr.split(' ');
+    const holidayDate = new Date(currentYear, monthNames.indexOf(month), parseInt(day));
+    return holidayDate < today;
+  };
+
+  const processedPublicHolidays = publicHolidays.map(holiday => ({
+    ...holiday,
+    isPast: isPastHoliday(holiday.date)
+  }));
+
+  const processedSchoolHolidays = (activeGroup === 'A' ? groupAHolidays : groupBHolidays).map(holiday => ({
+    ...holiday,
+    isPast: isPastHoliday(holiday.startDate)
+  }));
+
   const filteredHolidays = view === 'calendar' 
     ? currentMonthHolidays 
-    : publicHolidays.filter(holiday => holiday.type === view);
+    : processedPublicHolidays.filter(holiday => holiday.type === view);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
@@ -455,7 +475,7 @@ function App() {
               </div>
 
               <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
-                {(activeGroup === 'A' ? groupAHolidays : groupBHolidays).map((holiday, index) => {
+                {processedSchoolHolidays.map((holiday, index) => {
                   const days = calculateDays(holiday.startDate, holiday.endDate);
                   return (
                     <button
